@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Sprint</title>
+  <style>
+    :root{
+      --bg:#0B3D6B;
+      --panel:#0E4A7D;
+      --panel2:#0B2F4F;
+      --text:#EAF2FF;
+      --muted:#BFD2FF;
+      --accent:#3CE6C7;
+      --danger:#FF5C7C;
+      --warn:#FFD166;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius:16px;
+      --border: rgba(255,255,255,.12);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #081A33 0%, #0B3D6B 50%, #07162A 100%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:22px;
+    }
+
+    .app{
+      width:min(1200px, 100%);
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      gap:16px;
+    }
+
+    .sidebar{
+      background: rgba(14,74,125,.55);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      height: calc(100vh - 44px);
+      position: sticky;
+      top:22px;
+      overflow:auto;
+    }
+
+    .brand{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .brand h1{ font-size:16px; margin:0; letter-spacing:.2px; }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      color:var(--muted);
+    }
+
+    .timerCard{
+      margin:10px 0 14px;
+      background: rgba(11,47,79,.65);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+    }
+    .timerRow{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .timerLabel{ color:var(--muted); font-size:12px; }
+    .timerValue{
+      font-weight:800;
+      font-size:26px;
+      letter-spacing:1px;
+    }
+    .controls{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    button{
+      cursor:pointer;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(255,255,255,.10); border-color: rgba(60,230,199,.35); }
+    button:active{ transform: translateY(1px); }
+
+    .primary{
+      background: rgba(60,230,199,.18);
+      border-color: rgba(60,230,199,.45);
+    }
+    .danger{
+      background: rgba(255,92,124,.14);
+      border-color: rgba(255,92,124,.4);
+    }
+
+    .modeHint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      margin-top:10px;
+    }
+
+    .tabs{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .tabBtn{
+      width:100%;
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+      position:relative;
+    }
+    .tabBtn .t1{ font-weight:900; }
+    .tabBtn .t2{ color:var(--muted); font-size:12px; }
+    .tabBtn.active{
+      background: rgba(60,230,199,.16);
+      border-color: rgba(60,230,199,.55);
+      box-shadow: 0 10px 26px rgba(60,230,199,.12);
+    }
+    .tabBtn.locked{
+      opacity:.45;
+      cursor:not-allowed;
+      filter: saturate(.7);
+    }
+    .tabBtn.hiddenByLock{
+      display:none;
+    }
+
+    .content{
+      background: rgba(14,74,125,.35);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      height: calc(100vh - 44px);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .contentHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background: rgba(11,47,79,.35);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    .contentHeader h2{ margin:0; font-size:16px; }
+    .subtle{ color:var(--muted); font-size:12px; }
+
+    .contentBody{
+      padding:16px;
+      overflow:auto;
+      flex:1;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+
+    textarea{
+      width:100%;
+      min-height: 360px;
+      resize: vertical;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(7,22,42,.35);
+      color:var(--text);
+      padding:12px;
+      outline:none;
+      line-height:1.4;
+    }
+    textarea:focus{
+      border-color: rgba(60,230,199,.55);
+      box-shadow: 0 0 0 4px rgba(60,230,199,.12);
+    }
+
+    .actionsRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size:12px;
+    }
+
+    .attemptList{ display:flex; flex-direction:column; gap:10px; }
+    .attemptCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(7,22,42,.30);
+      padding:12px;
+    }
+    .attemptTop{
+      display:flex; justify-content:space-between; gap:10px; align-items:center;
+      margin-bottom:6px;
+    }
+    .smallBtn{
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+      font-size:12px;
+    }
+    .meta{ color:var(--muted); font-size:12px; }
+    .right{ text-align:right; }
+
+    /* overlay (keeps things harder to quit / no-peeking attempts) */
+    .focusOverlay{
+      position:fixed;
+      inset:0;
+      background: radial-gradient(circle at 50% 20%, rgba(60,230,199,.18), rgba(0,0,0,.65));
+      display:none;
+      z-index:999;
+      padding:20px;
+    }
+    .focusOverlay.show{ display:flex; align-items:center; justify-content:center; }
+    .focusModal{
+      width:min(680px, 100%);
+      background: rgba(7,22,42,.85);
+      border:1px solid rgba(60,230,199,.45);
+      border-radius:18px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      padding:18px;
+    }
+    .focusModal h3{ margin:0 0 6px; }
+    .focusModal p{ margin:0 0 14px; color:var(--muted); line-height:1.4; }
+    .focusModal .row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:2px 8px;
+      border-radius:10px;
+      color:var(--text);
+      font-size:12px;
+    }
+
+    /* spaced repetition display */
+    .srCard{
+      margin-top:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(7,22,42,.30);
+      padding:12px;
+    }
+    .srRow{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .srBig{ font-weight:900; font-size:18px; }
+    .srList{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .srItem{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius:12px;
+      padding:10px;
+    }
+    .srItem b{ font-size:13px; }
+    .srDue{
+      font-size:12px; color:var(--muted);
+      white-space:nowrap;
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      .sidebar,.content{ box-shadow:none; }
+      .focusOverlay{ display:none !important; }
+      .tabBtn.hiddenByLock{ display:block !important; opacity:1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Study Sprint</h1>
+        <div class="badge">No pen • No paper</div>
+      </div>
+
+      <div class="timerCard">
+        <div class="timerRow">
+          <div>
+            <div class="timerLabel">Session Timer</div>
+            <div class="timerValue" id="timerText">25:00</div>
+          </div>
+          <div class="pill" id="timerStatePill">Idle</div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" id="startBtn">Start</button>
+          <button class="danger" id="stopBtn">Stop</button>
+        </div>
+
+        <div style="margin-top:10px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+          <div>
+            <div class="timerLabel">Minutes</div>
+            <input id="minutesInput" type="number" min="1" max="180" value="25"
+                   style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+          </div>
+          <div>
+            <div class="timerLabel">Seconds</div>
+            <input id="secondsInput" type="number" min="0" max="59" value="0"
+                   style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button id="applyTimeBtn" style="width:100%;">Apply</button>
+          </div>
+        </div>
+
+        <div class="modeHint">
+          <b>Anti-peeking:</b> Tab 1 hides while timer runs.
+          <br/>
+          <b>Anti-quit:</b> tab switching adds penalties + Tab 3 unlocks only after an attempt.
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tabBtn active" data-tab="material" id="tabMaterial">
+          <div class="t1">Tab 1 — Study Material</div>
+          <div class="t2">What you must memorize</div>
+        </button>
+        <button class="tabBtn" data-tab="attempts" id="tabAttempts">
+          <div class="t1">Tab 2 — Attempts</div>
+          <div class="t2">Your initial answers</div>
+        </button>
+        <button class="tabBtn" data-tab="corrections" id="tabCorrections">
+          <div class="t1">Tab 3 — Corrections</div>
+          <div class="t2">Fix + improve</div>
+        </button>
+      </div>
+
+      <div class="actionsRow" style="margin-top:14px;">
+        <button id="exportBtn" style="flex:1;">Export</button>
+        <button id="clearBtn" class="danger" style="flex:1;">Reset</button>
+      </div>
+
+      <!-- penalty + SR summary -->
+      <div class="srCard" style="margin-top:14px;">
+        <div class="srRow">
+          <div>
+            <div class="timerLabel">Session penalties</div>
+            <div class="srBig" id="penaltyText">0</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="timerLabel">Current topic</div>
+            <div class="srBig" id="topicText">Default</div>
+          </div>
+        </div>
+        <div class="modeHint" style="margin-top:10px;">
+          Scoring & spaced repetition update after you run “Run Compare”.
+        </div>
+      </div>
+
+    </aside>
+
+    <main class="content">
+      <div class="contentHeader">
+        <div>
+          <h2 id="contentTitle">Study Material</h2>
+          <div class="subtle" id="contentSubtitle">Build your memory base.</div>
+        </div>
+        <div class="pill" id="lastSavedPill">Saved: —</div>
+      </div>
+
+      <section class="contentBody">
+        <!-- MATERIAL -->
+        <div id="panel-material">
+          <div class="grid2">
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Material to memorize</div>
+              <textarea id="materialText" placeholder="Paste your study notes here..."></textarea>
+              <div class="actionsRow">
+                <button id="saveMaterialBtn" class="primary">Save Material</button>
+                <button id="copyMaterialBtn">Copy</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Topic name (for spaced repetition)</div>
+              <input id="topicInput" type="text" placeholder="e.g., Biology: Krebs cycle" maxlength="80"
+                     style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+              <div style="margin-top:10px;" class="subtle">Memory prompts (optional)</div>
+              <textarea id="promptText" placeholder="Examples:
+- Explain the concept in 3 sentences.
+- List key steps.
+- Define each term..."></textarea>
+              <div class="actionsRow">
+                <button id="savePromptBtn">Save Prompts</button>
+              </div>
+              <div style="margin-top:12px;" class="pill">
+                <span>Suggestion:</span>
+                <span>After reading, switch to <b>Attempts</b> and write without looking.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="srCard">
+            <div class="subtle" style="margin-bottom:10px;">Spaced repetition dashboard (top topics)</div>
+            <div class="srList" id="srList"></div>
+          </div>
+        </div>
+
+        <!-- ATTEMPTS -->
+        <div id="panel-attempts" style="display:none;">
+          <div class="grid2">
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Type your attempt (no peeking)</div>
+              <textarea id="attemptText" placeholder="Write your answer here..."></textarea>
+              <div class="actionsRow">
+                <button id="submitAttemptBtn" class="primary">Submit Attempt</button>
+                <button id="clearAttemptInputBtn">Clear Input</button>
+              </div>
+              <div class="pill" style="margin-top:10px;">
+                <span>Pro tip:</span>
+                <span>Submit multiple attempts for the same topic.</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Your attempt history</div>
+              <div class="attemptList" id="attemptList"></div>
+              <div class="actionsRow" style="margin-top:10px;">
+                <button id="copyLatestAttemptBtn">Copy Latest</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CORRECTIONS -->
+        <div id="panel-corrections" style="display:none;">
+          <div class="grid2">
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Corrections (what you were missing)</div>
+              <textarea id="correctionsText" placeholder="Write the corrected answer here..."></textarea>
+              <div class="actionsRow">
+                <button id="saveCorrectionsBtn" class="primary">Save Corrections</button>
+              </div>
+
+              <div class="actionsRow" style="margin-top:10px;">
+                <button id="copyLatestAttemptToCorrectionsBtn">Paste Latest Attempt</button>
+                <button id="clearCorrectionsInputBtn">Clear Corrections</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="subtle" style="margin-bottom:8px;">Compare + score + update spaced repetition</div>
+
+              <div class="attemptCard" style="margin-bottom:12px;">
+                <div class="attemptTop">
+                  <div>
+                    <div style="font-weight:900;">Latest Attempt vs Corrections</div>
+                    <div class="meta" id="compareMeta">—</div>
+                  </div>
+                  <button id="runCompareBtn" class="smallBtn">Run Compare</button>
+                </div>
+                <div class="meta" id="compareResult" style="margin-top:8px; line-height:1.5;">
+                  Click “Run Compare” to estimate overlap and update your topic schedule.
+                </div>
+              </div>
+
+              <div class="attemptCard">
+                <div class="attemptTop">
+                  <div>
+                    <div style="font-weight:900;">Reminder</div>
+                    <div class="meta">Corrections are where learning becomes “real”.</div>
+                  </div>
+                </div>
+                <div class="meta" style="line-height:1.5;">
+                  After compare updates, your topic will show up as due in Tab 1’s dashboard.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- overlay -->
+  <div class="focusOverlay" id="focusOverlay" aria-hidden="true">
+    <div class="focusModal">
+      <h3 id="overlayTitle">Focus Mode is ON</h3>
+      <p id="overlayMsg">
+        Your session is running. Stick with Attempts until it ends.
+      </p>
+      <div class="row">
+        <button id="focusOkBtn" class="primary">OK</button>
+        <button id="focusStopBtn" class="danger">Stop session</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const STORE_KEY = "study_sprint_v2";
+
+  const $ = (id) => document.getElementById(id);
+
+  const state = {
+    activeTab: "material",
+    materialText: "",
+    promptText: "",
+    topicName: "Default",
+
+    attempts: [], // { id, text, ts, topic }
+    correctionsText: "",
+
+    checklist: {}, // kept for compatibility; not used for your requested features
+
+    timer: {
+      running: false,
+      totalSeconds: 25*60,
+      remainingSeconds: 25*60,
+      lockedTab: "material",
+      lastTickAt: null
+    },
+
+    // Anti-quit & gating
+    session: {
+      penaltyPoints: 0,
+      attemptsSubmittedThisSession: false,
+      sessionId: null
+    },
+
+    // Spaced repetition per topic
+    // { topic: { missCount, attemptCount, dueInDays, nextDueTs } }
+    sr: {}
+  };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return;
+      const saved = JSON.parse(raw);
+      Object.assign(state, saved);
+    }catch(e){
+      console.warn("Load failed", e);
+    }
+  }
+  function saveState(){
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      $("lastSavedPill").textContent = "Saved: " + new Date().toLocaleTimeString();
+    }catch(e){
+      console.warn("Save failed", e);
+    }
+  }
+
+  function prettyTime(sec){
+    sec = Math.max(0, sec|0);
+    const mm = String(Math.floor(sec/60)).padStart(2,"0");
+    const ss = String(sec%60).padStart(2,"0");
+    return `${mm}:${ss}`;
+  }
+  function prettyTab(tab){
+    if(tab==="material") return "Material";
+    if(tab==="attempts") return "Attempts";
+    if(tab==="corrections") return "Corrections";
+    return tab;
+  }
+
+  function setTimerUI(){
+    $("timerText").textContent = prettyTime(state.timer.remainingSeconds|0);
+    $("timerStatePill").textContent = state.timer.running
+      ? `Running • Locked: ${prettyTab(state.timer.lockedTab)}`
+      : "Idle";
+  }
+
+  // --- Focus overlay ---
+  function showOverlay(title, msg){
+    $("overlayTitle").textContent = title || "Focus Mode is ON";
+    $("overlayMsg").textContent = msg || "Your session is running.";
+    $("focusOverlay").classList.add("show");
+    $("focusOverlay").setAttribute("aria-hidden","false");
+  }
+  function hideOverlay(){
+    $("focusOverlay").classList.remove("show");
+    $("focusOverlay").setAttribute("aria-hidden","true");
+  }
+
+  // --- Tab lock logic ---
+  function isCorrectionsUnlocked(){
+    return state.session.attemptsSubmittedThisSession === true;
+  }
+
+  function applyTabLocks(){
+    // No-peeking lock: hide material while timer running
+    const running = state.timer.running;
+
+    // Tab visibility
+    $("tabMaterial").classList.toggle("hiddenByLock", running);
+
+    // Corrections locked until at least one attempt submitted in this session
+    $("tabCorrections").classList.toggle("locked", running && !isCorrectionsUnlocked());
+
+    // If corrections is locked, also ensure panel isn't shown
+    if(running && !isCorrectionsUnlocked()){
+      if(state.activeTab === "corrections"){
+        // jump back to attempts
+        showTab("attempts", { fromLock: true });
+      }
+    }
+  }
+
+  function canSwitchTo(tab){
+    if(!state.timer.running) return { ok:true };
+
+    // No-peeking lock
+    if(tab === "material"){
+      return { ok:false, reason:"No-peeking lock is ON. Material stays hidden while your timer runs." };
+    }
+
+    // Anti-quit: corrections requires an attempt submission
+    if(tab === "corrections" && !isCorrectionsUnlocked()){
+      return { ok:false, reason:"Corrections are locked until you submit at least one attempt this session." };
+    }
+
+    return { ok:true };
+  }
+
+  function showTab(tab, opts={}) {
+    const check = canSwitchTo(tab);
+    if(!check.ok){
+      // penalty for attempting to switch during running session
+      if(state.timer.running && !opts.fromLock){
+        state.session.penaltyPoints += 1;
+        $("penaltyText").textContent = state.session.penaltyPoints;
+        saveState();
+      }
+      showOverlay("Focus Mode is ON", check.reason);
+      return;
+    }
+
+    state.activeTab = tab;
+
+    document.querySelectorAll(".tabBtn").forEach(btn=>{
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+
+    const panels = {
+      material: "panel-material",
+      attempts: "panel-attempts",
+      corrections: "panel-corrections"
+    };
+    Object.keys(panels).forEach(k=>{
+      $(panels[k]).style.display = (k===tab) ? "block" : "none";
+    });
+
+    if(tab==="material"){
+      $("contentTitle").textContent = "Study Material";
+      $("contentSubtitle").textContent = "Build your memory base.";
+    }else if(tab==="attempts"){
+      $("contentTitle").textContent = "Attempts";
+      $("contentSubtitle").textContent = "No peeking — write first.";
+    }else{
+      $("contentTitle").textContent = "Corrections";
+      $("contentSubtitle").textContent = "Fix + improve your answer.";
+    }
+
+    applyTabLocks();
+    saveState();
+  }
+
+  // --- penalty: count tab switches during session ---
+  function registerTabSwitchAttempt(newTab){
+    if(state.timer.running){
+      // every attempted switch while running gets penalty (except switch that is forced by locks)
+      state.session.penaltyPoints += 1;
+      $("penaltyText").textContent = state.session.penaltyPoints;
+      saveState();
+    }
+  }
+
+  // --- Attempts rendering ---
+  function escapeHtml(str){
+    return (str||"").replace(/[&<>"']/g, (m)=>{
+      const map = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
+      return map[m];
+    });
+  }
+
+  function renderAttempts(){
+    const list = $("attemptList");
+    list.innerHTML = "";
+
+    const topic = state.topicName || "Default";
+    const topicAttempts = state.attempts.filter(a=>a.topic === topic);
+
+    if(topicAttempts.length===0){
+      const empty = document.createElement("div");
+      empty.className = "attemptCard";
+      empty.innerHTML = `<div style="font-weight:900;">No attempts yet</div>
+        <div class="meta" style="margin-top:6px;">Submit your first attempt for this topic.</div>`;
+      list.appendChild(empty);
+      return;
+    }
+
+    const latestFirst = [...topicAttempts].sort((a,b)=>b.ts-a.ts);
+    latestFirst.forEach((a, idx)=>{
+      const card = document.createElement("div");
+      card.className = "attemptCard";
+      card.innerHTML = `
+        <div class="attemptTop">
+          <div>
+            <div style="font-weight:900;">Attempt #${topicAttempts.length - idx}</div>
+            <div class="meta">${new Date(a.ts).toLocaleString()}</div>
+          </div>
+          <div class="right" style="display:flex; gap:8px;">
+            <button class="smallBtn" data-copy="${a.id}">Copy</button>
+            <button class="smallBtn" data-delete="${a.id}" style="border-color: rgba(255,92,124,.45); color: #ffd1da;">Delete</button>
+          </div>
+        </div>
+        <div style="white-space:pre-wrap; line-height:1.4;" class="meta">${escapeHtml(a.text)}</div>
+      `;
+      list.appendChild(card);
+    });
+
+    list.onclick = (e)=>{
+      const del = e.target && e.target.dataset && e.target.dataset.delete;
+      const cp = e.target && e.target.dataset && e.target.dataset.copy;
+      if(del){
+        state.attempts = state.attempts.filter(x=>x.id!==del);
+        saveState();
+        renderAttempts();
+        return;
+      }
+      if(cp){
+        const a = state.attempts.find(x=>x.id===cp);
+        if(a){
+          navigator.clipboard?.writeText(a.text).catch(()=>{});
+        }
+        alert("Copied attempt to clipboard (if allowed by browser).");
+      }
+    };
+  }
+
+  function getLatestAttemptForTopic(){
+    const topic = state.topicName || "Default";
+    const topicAttempts = state.attempts.filter(a=>a.topic===topic);
+    if(topicAttempts.length===0) return null;
+    return topicAttempts.sort((a,b)=>b.ts-a.ts)[0];
+  }
+
+  // --- scoring & spaced repetition ---
+  function keywordsFromText(text){
+    return (text||"")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g," ")
+      .split(/\s+/)
+      .filter(w => w.length>=4)
+      .slice(0, 250);
+  }
+
+  function getOrInitSR(topic){
+    if(!state.sr[topic]){
+      state.sr[topic] = {
+        attemptCount: 0,
+        missCount: 0,
+        lastScore: null,
+        nextDueTs: Date.now(),  // due now initially
+        dueInDays: 0
+      };
+    }
+    return state.sr[topic];
+  }
+
+  function formatDue(ts){
+    const now = Date.now();
+    const diff = ts - now;
+    const days = diff / (1000*60*60*24);
+    if(diff <= 0) return "Due now";
+    if(days < 1) return "Due soon";
+    return `Due in ~${Math.ceil(days)} day(s)`;
+  }
+
+  function updateSpacedRepetition(topic, scorePercent){
+    // Interpret "miss" from low overlap:
+    // scorePercent closer to 100 = fewer misses.
+    const sr = getOrInitSR(topic);
+
+    sr.attemptCount += 1;
+
+    const miss = (scorePercent < 70) ? 1 : 0; // threshold
+    if(miss) sr.missCount += 1;
+
+    sr.lastScore = scorePercent;
+
+    // simple schedule:
+    // better score => longer due interval
+    let nextDays = 1;
+    if(scorePercent >= 90) nextDays = 7;
+    else if(scorePercent >= 80) nextDays = 5;
+    else if(scorePercent >= 70) nextDays = 3;
+    else nextDays = 1;
+
+    sr.dueInDays = nextDays;
+    sr.nextDueTs = Date.now() + nextDays * 24*60*60*1000;
+
+    state.sr[topic] = sr;
+  }
+
+  function renderSRDashboard(){
+    const list = $("srList");
+    list.innerHTML = "";
+
+    const topics = Object.keys(state.sr);
+    // If no SR yet, show placeholder
+    if(topics.length === 0){
+      list.innerHTML = `<div class="srItem">
+        <div><b>No topics scored yet</b><div class="srDue">Run Compare in Tab 3 to start spaced repetition.</div></div>
+        <div class="srDue">—</div>
+      </div>`;
+      return;
+    }
+
+    // show top 6 most urgent: due earliest
+    const sorted = topics
+      .map(t=>{
+        const sr = state.sr[t];
+        return { topic:t, sr };
+      })
+      .sort((a,b)=> (a.sr.nextDueTs - b.sr.nextDueTs));
+
+    sorted.slice(0,6).forEach(({topic,sr})=>{
+      const dueLabel = formatDue(sr.nextDueTs);
+      const missRate = sr.attemptCount ? Math.round((sr.missCount/sr.attemptCount)*100) : 0;
+
+      const item = document.createElement("div");
+      item.className = "srItem";
+      item.innerHTML = `
+        <div>
+          <b>${escapeHtml(topic)}</b>
+          <div class="srDue">Miss rate: ${missRate}% • Last score: ${sr.lastScore ?? "—"}%</div>
+        </div>
+        <div class="srDue">${dueLabel}</div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  // compare button: updates SR
+  function runCompare(){
+    const latest = getLatestAttemptForTopic();
+    const attemptText = latest ? latest.text : "";
+    const corrText = state.correctionsText || "";
+    const topic = state.topicName || "Default";
+
+    const aWords = keywordsFromText(attemptText);
+    const cWords = new Set(keywordsFromText(corrText));
+
+    if(!latest){
+      $("compareResult").textContent = "No attempts yet for this topic. Submit one in Attempts tab.";
+      $("compareMeta").textContent = "—";
+      return;
+    }
+
+    let hits = 0;
+    const uniqueAttempt = new Set(aWords);
+    uniqueAttempt.forEach(w=>{
+      if(cWords.has(w)) hits++;
+    });
+
+    const total = uniqueAttempt.size || 1;
+    const score = Math.round((hits/total)*100);
+
+    $("compareMeta").textContent = `Latest attempt: ${new Date(latest.ts).toLocaleString()}`;
+
+    $("compareResult").innerHTML = `
+      <div><b>Overlap score:</b> ${score}%</div>
+      <div class="meta" style="margin-top:6px;">
+        Unique keywords in attempt: <b>${total}</b><br/>
+        Matched keywords in corrections: <b>${hits}</b>
+      </div>
+      <div class="meta" style="margin-top:10px;">
+        Spaced repetition updated for <b>${escapeHtml(topic)}</b>.
+      </div>
+    `;
+
+    // update spaced repetition (THIS is the new SR feature)
+    updateSpacedRepetition(topic, score);
+    saveState();
+
+    // refresh dashboard
+    renderSRDashboard();
+    alert("Compare complete! Your topic schedule has been updated.");
+  }
+
+  // --- timer logic ---
+  let tickInterval = null;
+
+  function setTimeFromInputs(){
+    const m = Math.max(1, Number($("minutesInput").value || 25));
+    const s = Math.min(59, Math.max(0, Number($("secondsInput").value || 0)));
+    const total = m*60 + s;
+    state.timer.totalSeconds = total;
+    state.timer.remainingSeconds = total;
+    setTimerUI();
+    saveState();
+  }
+
+  function startTimer(){
+    if(state.timer.running) return;
+
+    if(state.timer.remainingSeconds <= 0){
+      setTimeFromInputs();
+    }
+
+    state.timer.running = true;
+    state.timer.lockedTab = state.activeTab;
+    state.timer.lastTickAt = Date.now();
+
+    // reset session anti-quit tracking
+    state.session.penaltyPoints = 0;
+    state.session.attemptsSubmittedThisSession = false;
+    state.session.sessionId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+    $("penaltyText").textContent = "0";
+    setTimerUI();
+
+    // no-peeking lock + corrections lock update
+    applyTabLocks();
+
+    // Force user into Attempts (best practice for “hard to quit”)
+    showTab("attempts", { fromLock:true });
+
+    // Ensure running keeps focus
+    tickInterval = setInterval(()=>{
+      const now = Date.now();
+      const dt = (now - state.timer.lastTickAt)/1000;
+      state.timer.lastTickAt = now;
+
+      state.timer.remainingSeconds -= dt;
+      if(state.timer.remainingSeconds <= 0){
+        state.timer.remainingSeconds = 0;
+        stopTimer(true);
+        return;
+      }
+      setTimerUI();
+    }, 200);
+
+    saveState();
+  }
+
+  function stopTimer(ended=false){
+    if(tickInterval){
+      clearInterval(tickInterval);
+      tickInterval = null;
+    }
+    state.timer.running = false;
+
+    // after stop, unlock tabs
+    state.timer.lastTickAt = null;
+    setTimerUI();
+
+    applyTabLocks();
+    saveState();
+
+    if(ended){
+      alert("Timer ended. You can switch tabs again.");
+      hideOverlay();
+    }
+  }
+
+  // --- Wire UI events ---
+  document.querySelectorAll(".tabBtn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const tab = btn.dataset.tab;
+
+      // Anti-quit: count tab switches during running session (even if allowed)
+      if(state.timer.running && tab !== state.activeTab){
+        registerTabSwitchAttempt(tab);
+      }
+
+      showTab(tab);
+    });
+  });
+
+  $("startBtn").addEventListener("click", ()=>{
+    startTimer();
+  });
+  $("stopBtn").addEventListener("click", ()=>{
+    hideOverlay();
+    stopTimer(false);
+  });
+
+  $("applyTimeBtn").addEventListener("click", setTimeFromInputs);
+
+  $("focusOkBtn").addEventListener("click", hideOverlay);
+  $("focusStopBtn").addEventListener("click", ()=>{
+    hideOverlay();
+    stopTimer(false);
+  });
+
+  // Material
+  $("topicInput").addEventListener("input", ()=>{
+    state.topicName = ($("topicInput").value || "").trim() || "Default";
+    $("topicText").textContent = state.topicName;
+    saveState();
+    renderAttempts();
+    renderSRDashboard();
+  });
+
+  $("saveMaterialBtn").addEventListener("click", ()=>{
+    state.materialText = $("materialText").value || "";
+    saveState();
+    alert("Material saved.");
+  });
+  $("copyMaterialBtn").addEventListener("click", ()=>{
+    navigator.clipboard?.writeText(state.materialText || $("materialText").value || "")
+      .then(()=>alert("Copied."))
+      .catch(()=>alert("Copy not allowed by browser."));
+  });
+
+  $("savePromptBtn").addEventListener("click", ()=>{
+    state.promptText = $("promptText").value || "";
+    saveState();
+    alert("Prompts saved.");
+  });
+
+  // Attempts
+  $("submitAttemptBtn").addEventListener("click", ()=>{
+    const txt = ($("attemptText").value || "").trim();
+    if(!txt){ alert("Write something first."); return; }
+
+    const entry = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+      text: txt,
+      ts: Date.now(),
+      topic: state.topicName || "Default"
+    };
+
+    state.attempts.push(entry);
+    $("attemptText").value = "";
+
+    // Gate corrections unlock after attempt submitted
+    if(state.timer.running){
+      state.session.attemptsSubmittedThisSession = true;
+      applyTabLocks();
+    }
+
+    saveState();
+    renderAttempts();
+    alert("Attempt submitted.");
+
+    // small nudge: if user is currently on corrections but locked, unlock will happen on next applyTabLocks
+  });
+
+  $("clearAttemptInputBtn").addEventListener("click", ()=>{
+    $("attemptText").value = "";
+  });
+
+  $("copyLatestAttemptBtn").addEventListener("click", ()=>{
+    const latest = getLatestAttemptForTopic();
+    if(!latest){ alert("No attempts yet."); return; }
+    navigator.clipboard?.writeText(latest.text).catch(()=>{});
+    alert("Copied latest attempt (if allowed).");
+  });
+
+  // Corrections
+  $("saveCorrectionsBtn").addEventListener("click", ()=>{
+    state.correctionsText = $("correctionsText").value || "";
+    saveState();
+    alert("Corrections saved.");
+  });
+
+  $("copyLatestAttemptToCorrectionsBtn").addEventListener("click", ()=>{
+    const latest = getLatestAttemptForTopic();
+    if(!latest){ alert("No attempts yet to copy."); return; }
+    $("correctionsText").value = latest.text;
+    $("correctionsText").focus();
+  });
+
+  $("clearCorrectionsInputBtn").addEventListener("click", ()=>{
+    $("correctionsText").value = "";
+  });
+
+  $("runCompareBtn").addEventListener("click", runCompare);
+
+  // Export / Reset
+  $("exportBtn").addEventListener("click", ()=>{
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "study-sprint-export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  $("clearBtn").addEventListener("click", ()=>{
+    if(!confirm("Reset everything? This clears material, attempts, corrections, timer, and spaced repetition.")) return;
+    localStorage.removeItem(STORE_KEY);
+    location.reload();
+  });
+
+  // Autosave (lightweight)
+  let saveTimer = null;
+  const autos = ["materialText","promptText","attemptText","correctionsText","topicInput"];
+  autos.forEach(id=>{
+    $(id).addEventListener("input", ()=>{
+      if(saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(()=>{
+        state.materialText = $("materialText").value || "";
+        state.promptText = $("promptText").value || "";
+        state.attemptText = $("attemptText").value || "";
+        state.correctionsText = $("correctionsText").value || "";
+        state.topicName = ($("topicInput").value || "").trim() || "Default";
+        $("topicText").textContent = state.topicName;
+        saveState();
+      }, 450);
+    });
+  });
+
+  // ---- Initial load ----
+  loadState();
+
+  $("materialText").value = state.materialText || "";
+  $("promptText").value = state.promptText || "";
+  $("correctionsText").value = state.correctionsText || "";
+  $("topicInput").value = state.topicName || "Default";
+  $("topicText").textContent = state.topicName || "Default";
+
+  // timer UI
+  if(typeof state.timer.totalSeconds === "number" && typeof state.timer.remainingSeconds === "number"){
+    setTimerUI();
+  }else{
+    setTimeFromInputs();
+  }
+
+  $("penaltyText").textContent = String(state.session.penaltyPoints || 0);
+
+  renderAttempts();
+  renderSRDashboard();
+
+  // show tab
+  showTab(state.activeTab || "material", { fromLock:true });
+
+  // ensure locks consistent if timer is running after refresh
+  applyTabLocks();
+
+  // If running, keep no-peeking constraint active
+  if(state.timer.running){
+    showTab("attempts", { fromLock:true });
+  }
+
+  // Keep Compare result relevant only when viewing corrections (optional light refresh)
+  // (not required for your requested features)
+</script>
+</body>
+</html>
