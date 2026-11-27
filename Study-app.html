@@ -1,9 +1,20 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Study Sprint</title>
+
+  <!-- MathJax (renders LaTeX previews; COPY STILL COPIES RAW TEXT) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
   <style>
     :root{
       --bg:#0B3D6B;
@@ -91,7 +102,7 @@
       padding:10px 12px;
       border-radius:12px;
       font-weight:700;
-      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
       user-select:none;
     }
     button:hover{ background: rgba(255,255,255,.10); border-color: rgba(60,230,199,.35); }
@@ -263,7 +274,7 @@
     .kbd{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       background: rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.12);
+      border:1pxsolid rgba(255,255,255,.12);
       padding:2px 8px;
       border-radius:10px;
       color:var(--text);
@@ -290,7 +301,7 @@
     }
     .srItem{
       display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
-      border:1px solid rgba(255,255,255,.08);
+      border:1pxsolid rgba(255,255,255,.08);
       background: rgba(255,255,255,.03);
       border-radius:12px;
       padding:10px;
@@ -301,11 +312,26 @@
       white-space:nowrap;
     }
 
+    .mathPreview{
+      margin-top:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,22,42,.25);
+      padding:12px;
+      color: var(--text);
+    }
+    .mathPreview .previewTitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+
     @media print{
       body{ background:#fff; color:#000; }
       .sidebar,.content{ box-shadow:none; }
       .focusOverlay{ display:none !important; }
       .tabBtn.hiddenByLock{ display:block !important; opacity:1; }
+      .mathPreview{ display:none; }
     }
   </style>
 </head>
@@ -317,6 +343,7 @@
         <div class="badge">No pen • No paper</div>
       </div>
 
+      <!-- Main session timer -->
       <div class="timerCard">
         <div class="timerRow">
           <div>
@@ -348,9 +375,45 @@
         </div>
 
         <div class="modeHint">
-          <b>Anti-peeking:</b> Tab 1 hides while timer runs.
+          <b>Anti-peeking:</b> Material hides while either timer runs.
           <br/>
-          <b>Anti-quit:</b> tab switching adds penalties + Tab 3 unlocks only after an attempt.
+          <b>Anti-quit:</b> Corrections unlock only after submitting an attempt.
+        </div>
+      </div>
+
+      <!-- NEW: Memorising timer -->
+      <div class="timerCard">
+        <div class="timerRow">
+          <div>
+            <div class="timerLabel">Memorising Timer</div>
+            <div class="timerValue" id="memorizeTimerText">15:00</div>
+          </div>
+          <div class="pill" id="memorizeTimerStatePill">Idle</div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" id="memorizeStartBtn">Start</button>
+          <button class="danger" id="memorizeStopBtn">Stop</button>
+        </div>
+
+        <div style="margin-top:10px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+          <div>
+            <div class="timerLabel">Minutes</div>
+            <input id="memorizeMinutesInput" type="number" min="1" max="180" value="15"
+                   style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+          </div>
+          <div>
+            <div class="timerLabel">Seconds</div>
+            <input id="memorizeSecondsInput" type="number" min="0" max="59" value="0"
+                   style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button id="applyMemorizeTimeBtn" style="width:100%;">Apply</button>
+          </div>
+        </div>
+
+        <div class="modeHint">
+          Starts the same anti-peeking mode (Material hides).
         </div>
       </div>
 
@@ -403,12 +466,20 @@
       </div>
 
       <section class="contentBody">
+
         <!-- MATERIAL -->
         <div id="panel-material">
           <div class="grid2">
             <div>
               <div class="subtle" style="margin-bottom:8px;">Material to memorize</div>
-              <textarea id="materialText" placeholder="Paste your study notes here..."></textarea>
+              <textarea id="materialText" placeholder="Paste your study notes here... (supports LaTeX math like: \frac{a}{b}, x^2, \int_0^1 x\,dx)"></textarea>
+
+              <!-- Math preview (visual only, copy still uses textarea raw text) -->
+              <div class="mathPreview" id="materialPreview">
+                <div class="previewTitle">Math preview (renders LaTeX)</div>
+                <div id="materialPreviewInner"></div>
+              </div>
+
               <div class="actionsRow">
                 <button id="saveMaterialBtn" class="primary">Save Material</button>
                 <button id="copyMaterialBtn">Copy</button>
@@ -419,14 +490,26 @@
               <div class="subtle" style="margin-bottom:8px;">Topic name (for spaced repetition)</div>
               <input id="topicInput" type="text" placeholder="e.g., Biology: Krebs cycle" maxlength="80"
                      style="width:100%; padding:10px; border-radius:12px; border:1px solid var(--border); background: rgba(7,22,42,.35); color:var(--text); outline:none;">
+
               <div style="margin-top:10px;" class="subtle">Memory prompts (optional)</div>
               <textarea id="promptText" placeholder="Examples:
 - Explain the concept in 3 sentences.
 - List key steps.
-- Define each term..."></textarea>
+- Define each term...
+
+You can also write LaTeX here, e.g.:
+\forall x \in \mathbb{R},\; x^2 \ge 0
+"></textarea>
+
+              <div class="mathPreview" id="promptPreview">
+                <div class="previewTitle">Math preview (renders LaTeX)</div>
+                <div id="promptPreviewInner"></div>
+              </div>
+
               <div class="actionsRow">
                 <button id="savePromptBtn">Save Prompts</button>
               </div>
+
               <div style="margin-top:12px;" class="pill">
                 <span>Suggestion:</span>
                 <span>After reading, switch to <b>Attempts</b> and write without looking.</span>
@@ -445,11 +528,18 @@
           <div class="grid2">
             <div>
               <div class="subtle" style="margin-bottom:8px;">Type your attempt (no peeking)</div>
-              <textarea id="attemptText" placeholder="Write your answer here..."></textarea>
+              <textarea id="attemptText" placeholder="Write your answer here... (LaTeX supported)"></textarea>
+
+              <div class="mathPreview" id="attemptPreview">
+                <div class="previewTitle">Math preview (renders LaTeX)</div>
+                <div id="attemptPreviewInner"></div>
+              </div>
+
               <div class="actionsRow">
                 <button id="submitAttemptBtn" class="primary">Submit Attempt</button>
                 <button id="clearAttemptInputBtn">Clear Input</button>
               </div>
+
               <div class="pill" style="margin-top:10px;">
                 <span>Pro tip:</span>
                 <span>Submit multiple attempts for the same topic.</span>
@@ -471,7 +561,13 @@
           <div class="grid2">
             <div>
               <div class="subtle" style="margin-bottom:8px;">Corrections (what you were missing)</div>
-              <textarea id="correctionsText" placeholder="Write the corrected answer here..."></textarea>
+              <textarea id="correctionsText" placeholder="Write the corrected answer here... (LaTeX supported)"></textarea>
+
+              <div class="mathPreview" id="correctionsPreview">
+                <div class="previewTitle">Math preview (renders LaTeX)</div>
+                <div id="correctionsPreviewInner"></div>
+              </div>
+
               <div class="actionsRow">
                 <button id="saveCorrectionsBtn" class="primary">Save Corrections</button>
               </div>
@@ -512,6 +608,7 @@
             </div>
           </div>
         </div>
+
       </section>
     </main>
   </div>
@@ -544,8 +641,6 @@
     attempts: [], // { id, text, ts, topic }
     correctionsText: "",
 
-    checklist: {}, // kept for compatibility; not used for your requested features
-
     timer: {
       running: false,
       totalSeconds: 25*60,
@@ -554,7 +649,15 @@
       lastTickAt: null
     },
 
-    // Anti-quit & gating
+    // NEW: memorize timer
+    memorizeTimer: {
+      running: false,
+      totalSeconds: 15*60,
+      remainingSeconds: 15*60,
+      lastTickAt: null
+    },
+
+    // Anti-quit & gating (based on session: attempts submission)
     session: {
       penaltyPoints: 0,
       attemptsSubmittedThisSession: false,
@@ -562,7 +665,6 @@
     },
 
     // Spaced repetition per topic
-    // { topic: { missCount, attemptCount, dueInDays, nextDueTs } }
     sr: {}
   };
 
@@ -598,11 +700,8 @@
     return tab;
   }
 
-  function setTimerUI(){
-    $("timerText").textContent = prettyTime(state.timer.remainingSeconds|0);
-    $("timerStatePill").textContent = state.timer.running
-      ? `Running • Locked: ${prettyTab(state.timer.lockedTab)}`
-      : "Idle";
+  function isAnyTimerRunning(){
+    return !!(state.timer.running || state.memorizeTimer.running);
   }
 
   // --- Focus overlay ---
@@ -623,30 +722,29 @@
   }
 
   function applyTabLocks(){
-    // No-peeking lock: hide material while timer running
-    const running = state.timer.running;
+    // No-peeking lock: hide material while ANY timer runs
+    const running = isAnyTimerRunning();
 
-    // Tab visibility
     $("tabMaterial").classList.toggle("hiddenByLock", running);
 
     // Corrections locked until at least one attempt submitted in this session
+    // (still same as your original logic)
     $("tabCorrections").classList.toggle("locked", running && !isCorrectionsUnlocked());
 
     // If corrections is locked, also ensure panel isn't shown
     if(running && !isCorrectionsUnlocked()){
       if(state.activeTab === "corrections"){
-        // jump back to attempts
         showTab("attempts", { fromLock: true });
       }
     }
   }
 
   function canSwitchTo(tab){
-    if(!state.timer.running) return { ok:true };
+    if(!isAnyTimerRunning()) return { ok:true };
 
     // No-peeking lock
     if(tab === "material"){
-      return { ok:false, reason:"No-peeking lock is ON. Material stays hidden while your timer runs." };
+      return { ok:false, reason:"Anti-peeking is ON. Material stays hidden while your timers run." };
     }
 
     // Anti-quit: corrections requires an attempt submission
@@ -660,8 +758,7 @@
   function showTab(tab, opts={}) {
     const check = canSwitchTo(tab);
     if(!check.ok){
-      // penalty for attempting to switch during running session
-      if(state.timer.running && !opts.fromLock){
+      if(isAnyTimerRunning() && !opts.fromLock){
         state.session.penaltyPoints += 1;
         $("penaltyText").textContent = state.session.penaltyPoints;
         saveState();
@@ -700,17 +797,16 @@
     saveState();
   }
 
-  // --- penalty: count tab switches during session ---
+  // --- penalty: count tab switches during running timers ---
   function registerTabSwitchAttempt(newTab){
-    if(state.timer.running){
-      // every attempted switch while running gets penalty (except switch that is forced by locks)
+    if(isAnyTimerRunning()){
       state.session.penaltyPoints += 1;
       $("penaltyText").textContent = state.session.penaltyPoints;
       saveState();
     }
   }
 
-  // --- Attempts rendering ---
+  // Attempts rendering
   function escapeHtml(str){
     return (str||"").replace(/[&<>"']/g, (m)=>{
       const map = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
@@ -780,7 +876,7 @@
     return topicAttempts.sort((a,b)=>b.ts-a.ts)[0];
   }
 
-  // --- scoring & spaced repetition ---
+  // --- Spaced repetition / compare ---
   function keywordsFromText(text){
     return (text||"")
       .toLowerCase()
@@ -796,7 +892,7 @@
         attemptCount: 0,
         missCount: 0,
         lastScore: null,
-        nextDueTs: Date.now(),  // due now initially
+        nextDueTs: Date.now(),
         dueInDays: 0
       };
     }
@@ -813,19 +909,14 @@
   }
 
   function updateSpacedRepetition(topic, scorePercent){
-    // Interpret "miss" from low overlap:
-    // scorePercent closer to 100 = fewer misses.
     const sr = getOrInitSR(topic);
 
     sr.attemptCount += 1;
-
-    const miss = (scorePercent < 70) ? 1 : 0; // threshold
+    const miss = (scorePercent < 70) ? 1 : 0;
     if(miss) sr.missCount += 1;
 
     sr.lastScore = scorePercent;
 
-    // simple schedule:
-    // better score => longer due interval
     let nextDays = 1;
     if(scorePercent >= 90) nextDays = 7;
     else if(scorePercent >= 80) nextDays = 5;
@@ -843,7 +934,6 @@
     list.innerHTML = "";
 
     const topics = Object.keys(state.sr);
-    // If no SR yet, show placeholder
     if(topics.length === 0){
       list.innerHTML = `<div class="srItem">
         <div><b>No topics scored yet</b><div class="srDue">Run Compare in Tab 3 to start spaced repetition.</div></div>
@@ -852,7 +942,6 @@
       return;
     }
 
-    // show top 6 most urgent: due earliest
     const sorted = topics
       .map(t=>{
         const sr = state.sr[t];
@@ -877,7 +966,6 @@
     });
   }
 
-  // compare button: updates SR
   function runCompare(){
     const latest = getLatestAttemptForTopic();
     const attemptText = latest ? latest.text : "";
@@ -915,17 +1003,22 @@
       </div>
     `;
 
-    // update spaced repetition (THIS is the new SR feature)
     updateSpacedRepetition(topic, score);
     saveState();
 
-    // refresh dashboard
     renderSRDashboard();
     alert("Compare complete! Your topic schedule has been updated.");
   }
 
-  // --- timer logic ---
+  // --- timer logic: main session ---
   let tickInterval = null;
+
+  function setTimerUI(){
+    $("timerText").textContent = prettyTime(state.timer.remainingSeconds|0);
+    $("timerStatePill").textContent = state.timer.running
+      ? `Running`
+      : (isAnyTimerRunning() ? "Running (Memorise)" : "Idle");
+  }
 
   function setTimeFromInputs(){
     const m = Math.max(1, Number($("minutesInput").value || 25));
@@ -945,7 +1038,6 @@
     }
 
     state.timer.running = true;
-    state.timer.lockedTab = state.activeTab;
     state.timer.lastTickAt = Date.now();
 
     // reset session anti-quit tracking
@@ -956,13 +1048,11 @@
     $("penaltyText").textContent = "0";
     setTimerUI();
 
-    // no-peeking lock + corrections lock update
+    // lock + nudge into attempts
     applyTabLocks();
-
-    // Force user into Attempts (best practice for “hard to quit”)
     showTab("attempts", { fromLock:true });
 
-    // Ensure running keeps focus
+    if(tickInterval) clearInterval(tickInterval);
     tickInterval = setInterval(()=>{
       const now = Date.now();
       const dt = (now - state.timer.lastTickAt)/1000;
@@ -986,17 +1076,97 @@
       tickInterval = null;
     }
     state.timer.running = false;
-
-    // after stop, unlock tabs
     state.timer.lastTickAt = null;
-    setTimerUI();
 
+    setTimerUI();
     applyTabLocks();
     saveState();
 
     if(ended){
-      alert("Timer ended. You can switch tabs again.");
+      alert("Session timer ended. You can switch tabs again if Memorising timer is also stopped.");
       hideOverlay();
+    }else{
+      // if memorize timer still running, keep overlay
+      if(!state.memorizeTimer.running) hideOverlay();
+    }
+  }
+
+  // --- memorising timer logic: NEW ---
+  let memorizeTickInterval = null;
+
+  function setMemorizeTimerUI(){
+    $("memorizeTimerText").textContent = prettyTime(state.memorizeTimer.remainingSeconds|0);
+    $("memorizeTimerStatePill").textContent = state.memorizeTimer.running ? "Running" : "Idle";
+  }
+
+  function setMemorizeTimeFromInputs(){
+    const m = Math.max(1, Number($("memorizeMinutesInput").value || 15));
+    const s = Math.min(59, Math.max(0, Number($("memorizeSecondsInput").value || 0)));
+    const total = m*60 + s;
+    state.memorizeTimer.totalSeconds = total;
+    state.memorizeTimer.remainingSeconds = total;
+    setMemorizeTimerUI();
+    saveState();
+  }
+
+  function startMemorizeTimer(){
+    if(state.memorizeTimer.running) return;
+
+    if(state.memorizeTimer.remainingSeconds <= 0){
+      setMemorizeTimeFromInputs();
+    }
+
+    state.memorizeTimer.running = true;
+    state.memorizeTimer.lastTickAt = Date.now();
+
+    // reset session anti-quit tracking for gating
+    state.session.penaltyPoints = 0;
+    state.session.attemptsSubmittedThisSession = false;
+    state.session.sessionId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+
+    $("penaltyText").textContent = "0";
+
+    setMemorizeTimerUI();
+    applyTabLocks();
+
+    // Force into Attempts during memorising as well (same anti-peeking mode)
+    showTab("attempts", { fromLock:true });
+
+    if(memorizeTickInterval) clearInterval(memorizeTickInterval);
+    memorizeTickInterval = setInterval(()=>{
+      const now = Date.now();
+      const dt = (now - state.memorizeTimer.lastTickAt)/1000;
+      state.memorizeTimer.lastTickAt = now;
+
+      state.memorizeTimer.remainingSeconds -= dt;
+      if(state.memorizeTimer.remainingSeconds <= 0){
+        state.memorizeTimer.remainingSeconds = 0;
+        stopMemorizeTimer(true);
+        return;
+      }
+      setMemorizeTimerUI();
+    }, 200);
+
+    saveState();
+  }
+
+  function stopMemorizeTimer(ended=false){
+    if(memorizeTickInterval){
+      clearInterval(memorizeTickInterval);
+      memorizeTickInterval = null;
+    }
+    state.memorizeTimer.running = false;
+    state.memorizeTimer.lastTickAt = null;
+
+    setMemorizeTimerUI();
+    applyTabLocks();
+    saveState();
+
+    if(ended){
+      alert("Memorising timer ended. You can switch tabs again if Session timer is also stopped.");
+      if(!state.timer.running) hideOverlay();
+    }else{
+      if(!state.timer.running) hideOverlay();
     }
   }
 
@@ -1005,8 +1175,7 @@
     btn.addEventListener("click", ()=>{
       const tab = btn.dataset.tab;
 
-      // Anti-quit: count tab switches during running session (even if allowed)
-      if(state.timer.running && tab !== state.activeTab){
+      if(isAnyTimerRunning() && tab !== state.activeTab){
         registerTabSwitchAttempt(tab);
       }
 
@@ -1014,23 +1183,29 @@
     });
   });
 
-  $("startBtn").addEventListener("click", ()=>{
-    startTimer();
-  });
+  $("startBtn").addEventListener("click", ()=>{ startTimer(); });
   $("stopBtn").addEventListener("click", ()=>{
     hideOverlay();
     stopTimer(false);
   });
 
+  $("memorizeStartBtn").addEventListener("click", ()=>{ startMemorizeTimer(); });
+  $("memorizeStopBtn").addEventListener("click", ()=>{
+    hideOverlay();
+    stopMemorizeTimer(false);
+  });
+
   $("applyTimeBtn").addEventListener("click", setTimeFromInputs);
+  $("applyMemorizeTimeBtn").addEventListener("click", setMemorizeTimeFromInputs);
 
   $("focusOkBtn").addEventListener("click", hideOverlay);
   $("focusStopBtn").addEventListener("click", ()=>{
     hideOverlay();
     stopTimer(false);
+    stopMemorizeTimer(false);
   });
 
-  // Material
+  // Material fields
   $("topicInput").addEventListener("input", ()=>{
     state.topicName = ($("topicInput").value || "").trim() || "Default";
     $("topicText").textContent = state.topicName;
@@ -1044,6 +1219,7 @@
     saveState();
     alert("Material saved.");
   });
+
   $("copyMaterialBtn").addEventListener("click", ()=>{
     navigator.clipboard?.writeText(state.materialText || $("materialText").value || "")
       .then(()=>alert("Copied."))
@@ -1071,8 +1247,7 @@
     state.attempts.push(entry);
     $("attemptText").value = "";
 
-    // Gate corrections unlock after attempt submitted
-    if(state.timer.running){
+    if(isAnyTimerRunning()){
       state.session.attemptsSubmittedThisSession = true;
       applyTabLocks();
     }
@@ -1080,19 +1255,18 @@
     saveState();
     renderAttempts();
     alert("Attempt submitted.");
-
-    // small nudge: if user is currently on corrections but locked, unlock will happen on next applyTabLocks
   });
 
   $("clearAttemptInputBtn").addEventListener("click", ()=>{
     $("attemptText").value = "";
+    triggerMathPreview();
   });
 
   $("copyLatestAttemptBtn").addEventListener("click", ()=>{
     const latest = getLatestAttemptForTopic();
     if(!latest){ alert("No attempts yet."); return; }
     navigator.clipboard?.writeText(latest.text).catch(()=>{});
-    alert("Copied latest attempt (if allowed).");
+    alert("Copied latest attempt (if allowed by browser).");
   });
 
   // Corrections
@@ -1107,10 +1281,12 @@
     if(!latest){ alert("No attempts yet to copy."); return; }
     $("correctionsText").value = latest.text;
     $("correctionsText").focus();
+    triggerMathPreview();
   });
 
   $("clearCorrectionsInputBtn").addEventListener("click", ()=>{
     $("correctionsText").value = "";
+    triggerMathPreview();
   });
 
   $("runCompareBtn").addEventListener("click", runCompare);
@@ -1128,7 +1304,7 @@
   });
 
   $("clearBtn").addEventListener("click", ()=>{
-    if(!confirm("Reset everything? This clears material, attempts, corrections, timer, and spaced repetition.")) return;
+    if(!confirm("Reset everything? This clears material, attempts, corrections, timers, and spaced repetition.")) return;
     localStorage.removeItem(STORE_KEY);
     location.reload();
   });
@@ -1142,12 +1318,65 @@
       saveTimer = setTimeout(()=>{
         state.materialText = $("materialText").value || "";
         state.promptText = $("promptText").value || "";
-        state.attemptText = $("attemptText").value || "";
+        state.attemptText = $("attemptText").value || ""; // note: not stored in state before submit; still keep for autosave
         state.correctionsText = $("correctionsText").value || "";
         state.topicName = ($("topicInput").value || "").trim() || "Default";
         $("topicText").textContent = state.topicName;
         saveState();
       }, 450);
+    });
+  });
+
+  // -------- Math preview rendering (visual only) --------
+  // Converts textarea text into an HTML-safe block, then asks MathJax to typeset it.
+  function updateMathPreview(text, previewEl){
+    // Keep raw text; allow MathJax to detect inline math delimiters.
+    // We'll wrap entire content in a <div> and set innerText so it doesn't execute HTML.
+    previewEl.innerText = text || "";
+    // Now MathJax needs math delimiters; it won't parse inside innerText reliably.
+    // Better: set as text, but MathJax reads from DOM text nodes; it should still detect $...$ or \(..\).
+    // Still, to maximize reliability, we will render with MathJax typesetClear and typeset on the container.
+  }
+
+  async function typesetContainer(container){
+    try{
+      if(window.MathJax && window.MathJax.typesetPromise){
+        await window.MathJax.typesetPromise([container]);
+      } else if(window.MathJax && window.MathJax.typeset){
+        window.MathJax.typeset([container]);
+      }
+    }catch(e){
+      // ignore preview errors
+    }
+  }
+
+  function renderPreviewForAll(){
+    // Material
+    $("materialPreviewInner").textContent = $("materialText").value || "";
+    // Prompt
+    $("promptPreviewInner").textContent = $("promptText").value || "";
+    // Attempt
+    $("attemptPreviewInner").textContent = $("attemptText").value || "";
+    // Corrections
+    $("correctionsPreviewInner").textContent = $("correctionsText").value || "";
+  }
+
+  async function triggerMathPreview(){
+    // Render raw text into preview containers
+    renderPreviewForAll();
+    // Typeset each container
+    await typesetContainer($("materialPreview"));
+    await typesetContainer($("promptPreview"));
+    await typesetContainer($("attemptPreview"));
+    await typesetContainer($("correctionsPreview"));
+  }
+
+  // Bind preview updates
+  ["materialText","promptText","attemptText","correctionsText"].forEach(id=>{
+    $(id).addEventListener("input", ()=>{
+      // debounce a bit
+      clearTimeout(window.__mjDebounce);
+      window.__mjDebounce = setTimeout(()=>triggerMathPreview(), 180);
     });
   });
 
@@ -1160,11 +1389,17 @@
   $("topicInput").value = state.topicName || "Default";
   $("topicText").textContent = state.topicName || "Default";
 
-  // timer UI
+  // timer UI init
   if(typeof state.timer.totalSeconds === "number" && typeof state.timer.remainingSeconds === "number"){
     setTimerUI();
   }else{
     setTimeFromInputs();
+  }
+
+  if(typeof state.memorizeTimer.totalSeconds === "number" && typeof state.memorizeTimer.remainingSeconds === "number"){
+    setMemorizeTimerUI();
+  }else{
+    setMemorizeTimeFromInputs();
   }
 
   $("penaltyText").textContent = String(state.session.penaltyPoints || 0);
@@ -1175,16 +1410,17 @@
   // show tab
   showTab(state.activeTab || "material", { fromLock:true });
 
-  // ensure locks consistent if timer is running after refresh
+  // Keep locks consistent if timer is running after refresh
   applyTabLocks();
 
-  // If running, keep no-peeking constraint active
-  if(state.timer.running){
+  // If any timer running after refresh, keep no-peeking constraint active
+  if(state.timer.running || state.memorizeTimer.running){
     showTab("attempts", { fromLock:true });
   }
 
-  // Keep Compare result relevant only when viewing corrections (optional light refresh)
-  // (not required for your requested features)
+  // Initial math previews
+  triggerMathPreview();
 </script>
 </body>
 </html>
+```
